@@ -1,0 +1,61 @@
+---
+- name: PAN Initial Setup Playbook
+  hosts: localhost
+  connection: local
+  gather_facts: False
+  vars:
+    panos_install_version: 
+    provider:
+        ip_address: 192.168.32.130
+        username: admin
+        password: admin
+
+  roles:
+    - role: PaloAltoNetworks.paloaltonetworks
+
+    - name: configure management settings
+      panos_mgtconfig:
+        provider: '{{ provider }}'
+        #hostname: '{{ pan_hostname }}'
+        #timezone: '{{ pan_timezone }}'
+        dns_server_primary: 8.8.8.8
+        dns_server_secondary: 4.2.2.2
+        #domain: '{{ pan_domain }}'
+        #ntp_server_primary: '{{ pan_ntp_server_primary }}'
+        #ntp_server_secondary: '{{ pan_ntp_server_secondary }}'
+
+  tasks:
+    - name: gather panos facts
+      panos_facts:
+        provider: '{{ provider }}'
+        gather_subset: all
+      debug:
+        msg: "Current PANOS is {{ ansible_net_version }}"
+
+    - name: install pan-os 8.1.6 and restart
+      panos_software:
+        provider: '{{ provider }}'
+        version: 9.0.3
+        restart: false
+        install: false
+      #when: ansible_net_version > panos_install_version
+
+    - name: wait for SSH (timeout 10min)
+      wait_for: port=22 host='{{ provider.ip_address }}' search_regex=SSH timeout=600
+
+    - name: wait for ssh and check if device is ready following reboot
+      wait_for: port=22 host='{{ provider.ip_address }}' search_regex=SSH timeout=600
+      panos_check:
+        provider: '{{ provider }}'
+      register: result
+      until: not result|failed
+      retries: 10
+      delay: 30
+
+  tasks:
+    - name: gather panos facts
+      panos_facts:
+        provider: '{{ provider }}'
+        gather_subset: all
+      debug:
+        msg: "Current PANOS is {{ ansible_net_version }}"
