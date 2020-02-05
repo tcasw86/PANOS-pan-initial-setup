@@ -6,13 +6,14 @@
   vars:
     panos_install_version: 
     provider:
-        ip_address: 192.168.32.130
+        ip_address: 192.168.32.10
         username: admin
         password: admin
 
   roles:
     - role: PaloAltoNetworks.paloaltonetworks
 
+  tasks:
     - name: configure management settings
       panos_mgtconfig:
         provider: '{{ provider }}'
@@ -24,11 +25,21 @@
         #ntp_server_primary: '{{ pan_ntp_server_primary }}'
         #ntp_server_secondary: '{{ pan_ntp_server_secondary }}'
 
-  tasks:
+    #- name: commit canidate config on firewall
+      #panos_commit:
+        #provider: '{{ provider }}'
+
+    - name: check if ready
+      panos_check:
+        provider: '{{ provider }}'
+        timeout: 60
+
     - name: gather panos facts
       panos_facts:
         provider: '{{ provider }}'
         gather_subset: all
+
+    - name: current panos version
       debug:
         msg: "Current PANOS is {{ ansible_net_version }}"
 
@@ -40,22 +51,3 @@
         install: false
       #when: ansible_net_version > panos_install_version
 
-    - name: wait for SSH (timeout 10min)
-      wait_for: port=22 host='{{ provider.ip_address }}' search_regex=SSH timeout=600
-
-    - name: wait for ssh and check if device is ready following reboot
-      wait_for: port=22 host='{{ provider.ip_address }}' search_regex=SSH timeout=600
-      panos_check:
-        provider: '{{ provider }}'
-      register: result
-      until: not result|failed
-      retries: 10
-      delay: 30
-
-  tasks:
-    - name: gather panos facts
-      panos_facts:
-        provider: '{{ provider }}'
-        gather_subset: all
-      debug:
-        msg: "Current PANOS is {{ ansible_net_version }}"

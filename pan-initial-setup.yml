@@ -51,7 +51,7 @@
     - name: add siriusadmin
       panos_administrator:
         provider: '{{ provider }}'
-        admin_username: 'siriusadmin'
+        admin_username: 'testadmin'
         admin_password: '{{ siriusadmin_password }}'
         superuser: true
         commit: false

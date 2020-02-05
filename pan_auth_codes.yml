@@ -1,0 +1,25 @@
+---
+- name: PAN Initial Setup Playbook
+  hosts: localhost
+  connection: local
+  gather_facts: False
+  vars:
+    panos_install_version: 
+    provider:
+        ip_address: 192.168.32.10
+        username: admin
+        password: admin
+
+  roles:
+    - role: PaloAltoNetworks.paloaltonetworks
+
+  tasks:
+    - name: activate my authcodes
+      panos_lic:
+        provider: '{{ provider }}'
+        auth_code: '#######'
+      register: result
+    
+    - debug:
+        msg: 'Licenses are {{ result.licenses }}' 
+
