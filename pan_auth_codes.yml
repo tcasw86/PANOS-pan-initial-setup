@@ -14,10 +14,9 @@
     - role: PaloAltoNetworks.paloaltonetworks
 
   tasks:
-    - name: activate my authcodes
+    - name: pull authcodes (request license fetch)
       panos_lic:
         provider: '{{ provider }}'
-        auth_code: '#######'
       register: result
     
     - debug:

@@ -1,0 +1,74 @@
+---
+- name: PAN Initial Setup Playbook
+  hosts: localhost
+  connection: local
+  gather_facts: False
+  vars:
+    panos_install_version: 
+    provider:
+        ip_address: 192.168.32.10
+        username: admin
+        password: admin
+
+  roles:
+    - role: PaloAltoNetworks.paloaltonetworks
+
+  tasks:
+  - name: download ironskillet fully loadable xml
+    get_url:
+      url: https://raw.githubusercontent.com/PaloAltoNetworks/iron-skillet/panos_v9.0/loadable_configs/sample-mgmt-static/panos/iron_skillet_panos_full.xml
+      dest: /home/tommy/ansible-projects/pan_initial_setup/iron_skillet/iron_skillet_panos_full.xml
+
+  - name: import configuration file into PAN-OS
+    panos_import:
+      ip_address: '{{ provider.ip_address }}'
+      username: '{{ provider.username }}'
+      password: '{{ provider.password }}'
+      file: /home/tommy/ansible-projects/pan_initial_setup/iron_skillet/iron_skillet_panos_full.xml
+      category: "configuration"
+    register: result
+
+  - name: load configuration
+    panos_loadcfg:
+      ip_address: '{{ provider.ip_address }}'
+      username: '{{ provider.username }}'
+      password: '{{ provider.password }}'
+      file: '{{result.filename}}'
+      commit: False
+
+  - name: configure management settings
+    panos_mgtconfig:
+      provider: '{{ provider }}'
+      hostname: test-host
+      login_banner: 
+        UNAUTHORIZED ACCESS TO THIS DEVICE IS PROHIBITED
+
+        You must have explicit, authorized permission to access or configure this device. Unauthorized attempts and actions to access or use this system may result in civil and/or criminal penalties. All activities performed on this device are logged and monitored.
+      timezone: US/Central
+      dns_server_primary: 1.1.1.1
+      dns_server_secondary: 2.2.2.2
+      domain: test.test
+      ntp_server_primary: 3.3.3.3
+      ntp_server_secondary: 3.3.3.3
+      commit: False
+
+  - name: set admin password
+    panos_administrator:
+      provider: '{{ provider }}'
+      admin_username: admin
+      admin_password: gGCTh7PqfG4HDjkJJyML
+      superuser: True
+      commit: False
+
+#Not working, need to fix, working on in testip playbook
+#  - name: reset MGMT ip address iron skillet template changed it
+#    panos_type_cmd:
+#      provider: '{{ provider }}'
+#      xpath: /config/devices/entry[@name='localhost.localdomain']/deviceconfig/system/ip-address/member[@name=''{{ provider.ip_address }}'']
+
+  - name: clean-up local ironskillet xml
+    file:
+      path: /home/tommy/ansible-projects/pan_initial_setup/iron_skillet/iron_skillet_panos_full.xml
+      state: absent
+
+  

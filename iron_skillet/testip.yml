@@ -1,0 +1,27 @@
+---
+- name: PAN Initial Setup Playbook
+  hosts: localhost
+  connection: local
+  gather_facts: False
+  vars:
+    panos_install_version: 
+    provider:
+        ip_address: 192.168.32.10
+        username: admin
+        password: admin
+
+  roles:
+    - role: PaloAltoNetworks.paloaltonetworks
+
+  tasks:
+  
+  - name: reset MGMT ip address iron skillet template changed it
+    panos_type_cmd:
+      provider: '{{ provider }}'
+      cmd: override
+      xpath:
+        /config/devices/entry[@name='localhost.localdomain']/deviceconfig/system/ip-address
+      element: 
+        <member name='1.1.1.1'>
+        
+  
