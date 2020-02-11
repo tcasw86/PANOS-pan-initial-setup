@@ -4,7 +4,7 @@
   connection: local
   gather_facts: False
   vars:
-    panos_install_version: 
+    panos_install_version: 9.0.3
     provider:
         ip_address: 192.168.32.10
         username: admin
@@ -14,25 +14,11 @@
     - role: PaloAltoNetworks.paloaltonetworks
 
   tasks:
-    - name: configure management settings
-      panos_mgtconfig:
-        provider: '{{ provider }}'
-        #hostname: '{{ pan_hostname }}'
-        #timezone: '{{ pan_timezone }}'
-        dns_server_primary: 8.8.8.8
-        dns_server_secondary: 4.2.2.2
-        #domain: '{{ pan_domain }}'
-        #ntp_server_primary: '{{ pan_ntp_server_primary }}'
-        #ntp_server_secondary: '{{ pan_ntp_server_secondary }}'
 
-    #- name: commit canidate config on firewall
-      #panos_commit:
-        #provider: '{{ provider }}'
-
-    - name: check if ready
-      panos_check:
-        provider: '{{ provider }}'
-        timeout: 60
+#    - name: check if ready
+#      panos_check:
+#        provider: '{{ provider }}'
+#        timeout: 60
 
     - name: gather panos facts
       panos_facts:
@@ -46,7 +32,7 @@
     - name: install pan-os 8.1.6 and restart
       panos_software:
         provider: '{{ provider }}'
-        version: 9.0.3
+        version: '{{ panos_install_version }}'
         restart: false
         install: false
       #when: ansible_net_version > panos_install_version

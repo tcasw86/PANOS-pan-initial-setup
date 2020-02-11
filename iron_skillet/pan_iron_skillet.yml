@@ -4,9 +4,12 @@
   connection: local
   gather_facts: False
   vars:
-    panos_install_version: 
+    panos_install_version:
+    local_iron_skillet: /home/tommy/ansible-projects/pan_initial_setup/iron_skillet/iron_skillet_panos_full.xml
+    github_iron_skillet: https://raw.githubusercontent.com/PaloAltoNetworks/iron-skillet/panos_v9.0/loadable_configs/sample-mgmt-static/panos/iron_skillet_panos_full.xml
     provider:
         ip_address: 192.168.32.10
+        default_gw: 192.168.32.2
         username: admin
         password: admin
 
@@ -16,15 +19,27 @@
   tasks:
   - name: download ironskillet fully loadable xml
     get_url:
-      url: https://raw.githubusercontent.com/PaloAltoNetworks/iron-skillet/panos_v9.0/loadable_configs/sample-mgmt-static/panos/iron_skillet_panos_full.xml
-      dest: /home/tommy/ansible-projects/pan_initial_setup/iron_skillet/iron_skillet_panos_full.xml
+      url: '{{ github_iron_skillet }}'
+      dest: '{{ local_iron_skillet }}'
+
+  - name: replace iron skillet mgmt ip with actual ip
+    replace:
+      path: '{{ local_iron_skillet }}'
+      regexp: '192.0.2.6'
+      replace: '{{ provider.ip_address }}'
+
+  - name: replace iron skillet mgmt gw with actual gw
+    replace:
+      path: '{{ local_iron_skillet }}'
+      regexp: '192.0.2.7'
+      replace: '{{ provider.default_gw }}'
 
   - name: import configuration file into PAN-OS
     panos_import:
       ip_address: '{{ provider.ip_address }}'
       username: '{{ provider.username }}'
       password: '{{ provider.password }}'
-      file: /home/tommy/ansible-projects/pan_initial_setup/iron_skillet/iron_skillet_panos_full.xml
+      file: '{{ local_iron_skillet }}'
       category: "configuration"
     register: result
 
@@ -60,15 +75,9 @@
       superuser: True
       commit: False
 
-#Not working, need to fix, working on in testip playbook
-#  - name: reset MGMT ip address iron skillet template changed it
-#    panos_type_cmd:
-#      provider: '{{ provider }}'
-#      xpath: /config/devices/entry[@name='localhost.localdomain']/deviceconfig/system/ip-address/member[@name=''{{ provider.ip_address }}'']
-
-  - name: clean-up local ironskillet xml
-    file:
-      path: /home/tommy/ansible-projects/pan_initial_setup/iron_skillet/iron_skillet_panos_full.xml
-      state: absent
+#  - name: clean-up local ironskillet xml
+#    file:
+#      path: '{{ local_iron_skillet }}'
+#      state: absent
 
   
